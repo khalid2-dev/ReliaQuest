@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  * @param <Input> object representation of a request body for creating Employee(s)
  */
 public interface IEmployeeController<Entity, Input> {
-
+ 
     @GetMapping()
     ResponseEntity<List<Entity>> getAllEmployees();
 
