@@ -2,19 +2,31 @@ package com.reliaquest.api.controller;
 
 import java.util.List;
 
+import javax.validation.Valid;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.reliaquest.api.entity.Employee;
-import com.reliaquest.api.entity.EmployeeRequest;
+import com.reliaquest.api.exception.EmployeeException;
+import com.reliaquest.api.exception.GeneralException;
+import com.reliaquest.api.request.EmployeeRequest;
 import com.reliaquest.api.service.EmployeeService;
+import com.reliaquest.api.utility.EmployeeUtility;
 
 
 @RestController
-@RequestMapping("/employee")
+@RequestMapping("/api/v1/employee")
 public class EmployeeController implements IEmployeeController<Employee, EmployeeRequest>{
+	
+	public static final Log LOGGER = LogFactory.getLog(EmployeeController.class); 
 	
 	@Autowired
 	private EmployeeService employeeService;
@@ -25,7 +37,7 @@ public class EmployeeController implements IEmployeeController<Employee, Employe
 	 */
 	@Override
 	public ResponseEntity<List<Employee>> getAllEmployees() {
-		// TODO Auto-generated method stub
+		LOGGER.info("Entering getAllEmployees ::");
 		return ResponseEntity.ok(employeeService.getAllEmployees());
 	}
 
@@ -35,9 +47,9 @@ public class EmployeeController implements IEmployeeController<Employee, Employe
 	 * @return returns all employees whose name contains or matches the string input provided
 	 */
 	@Override
-	public ResponseEntity<List<Employee>> getEmployeesByNameSearch(String searchString) {
-		// TODO Auto-generated method stub
-		return null;
+	public ResponseEntity<List<Employee>> getEmployeesByNameSearch(@PathVariable("searchString") String searchString) {
+		LOGGER.info("Entering getEmployeesByNameSearch ::");
+		return ResponseEntity.ok(employeeService.getEmployeesByNameSearch(searchString));
 	}
 
 	/**
@@ -46,9 +58,11 @@ public class EmployeeController implements IEmployeeController<Employee, Employe
 	 * @return returns a single employee
 	 */
 	@Override
-	public ResponseEntity<Employee> getEmployeeById(String id) {
-		// TODO Auto-generated method stub
-		return null;
+	public ResponseEntity<Employee> getEmployeeById(@PathVariable("id") String id) {
+		//employeeService.getEmployeeById(id);
+		LOGGER.info("Entering getEmployeeById ::");
+		LOGGER.info("ID to search :: "+id);
+		return ResponseEntity.ok(employeeService.getEmployeeById(id));
 	}
 
 	/**
@@ -57,8 +71,8 @@ public class EmployeeController implements IEmployeeController<Employee, Employe
 	 */
 	@Override
 	public ResponseEntity<Integer> getHighestSalaryOfEmployees() {
-		// TODO Auto-generated method stub
-		return null;
+		LOGGER.info("Entering getHighestSalaryOfEmployees ::");
+		return ResponseEntity.ok(employeeService.getHighestSalaryOfEmployees());
 	}
 
 	/**
@@ -67,8 +81,8 @@ public class EmployeeController implements IEmployeeController<Employee, Employe
 	 */
 	@Override
 	public ResponseEntity<List<String>> getTopTenHighestEarningEmployeeNames() {
-		// TODO Auto-generated method stub
-		return null;
+		LOGGER.info("Entering getTopTenHighestEarningEmployeeNames ::");
+		return ResponseEntity.ok(employeeService.getTopTenHighestEarningEmployeeNames());
 	}
 
 	/**
@@ -78,9 +92,9 @@ public class EmployeeController implements IEmployeeController<Employee, Employe
 	 * @throws error if failed
 	 */
 	@Override
-	public ResponseEntity<Employee> createEmployee(EmployeeRequest employeeRequest) {
-		// TODO Auto-generated method stub
-		return null;
+	public ResponseEntity<Employee> createEmployee(@Valid @RequestBody EmployeeRequest employeeRequest) {
+		LOGGER.info("Entering createEmployee ::");
+        return ResponseEntity.status(HttpStatus.CREATED).body(employeeService.createEmployee(employeeRequest));
 	}
 
 	/**
@@ -90,9 +104,10 @@ public class EmployeeController implements IEmployeeController<Employee, Employe
 	 * @throws error if failed
 	 */
 	@Override
-	public ResponseEntity<String> deleteEmployeeById(String id) {
-		// TODO Auto-generated method stub
-		return null;
+	public ResponseEntity<String> deleteEmployeeById(@PathVariable("id") String id) {
+		LOGGER.info("Entering deleteEmployeeById ::");
+		LOGGER.info("ID to be deleted :: "+id);
+		return ResponseEntity.ok(employeeService.deleteEmployeeById(id));
 	}
 
 }

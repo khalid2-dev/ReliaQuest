@@ -4,6 +4,10 @@ plugins {
 
 dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation 'org.springframework.boot:spring-boot-devtools'
+    implementation 'javax.validation:validation-api:2.0.1.Final'
+    implementation 'javax.servlet:javax.servlet-api:4.0.1'
+    implementation 'org.json:json:20171018'
 }
 
 springBoot {
