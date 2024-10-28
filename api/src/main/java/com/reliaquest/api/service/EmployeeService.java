@@ -17,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.reliaquest.api.controller.EmployeeController;
+import com.reliaquest.api.controller.error;
 import com.reliaquest.api.entity.Employee;
 import com.reliaquest.api.repository.EmployeeRepository;
 import com.reliaquest.api.request.DeleteEmployeeRequest;
@@ -39,10 +40,14 @@ public class EmployeeService {
     public EmployeeService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-	
+
 	@Autowired
 	private EmployeeRepository employeeRepository;
-
+	
+    /**
+     * This service returns a list of ALL employees
+     * @return returns a list of all employees
+     */
 	public List<Employee> getAllEmployees() {
 		LOGGER.info("Entering getAllEmployees service ::");
 		ResponseEntity<EmployeeResponse> response = restTemplate.getForEntity(BASE_URL, EmployeeResponse.class);
@@ -52,6 +57,11 @@ public class EmployeeService {
 		return (List<Employee>) response.getBody().getData();
 	}
 
+	/**
+	 * This service returns all employees whose name contains or matches the string search provided
+	 * @param name as search string
+	 * @return returns a list of employees whose name contains or matches the string input provided
+	 */
 	public List<Employee> getEmployeesByNameSearch(String searchString) {
 		LOGGER.info("Entering getEmployeesByNameSearch service ::");
 		ResponseEntity<EmployeeResponse> response = restTemplate.getForEntity(BASE_URL, EmployeeResponse.class);
@@ -81,6 +91,11 @@ public class EmployeeService {
 		return employeeNameMatchingList;
 	}
 
+	/**
+	 * This service returns a single employee based on a given id
+	 * @param employee id as string
+	 * @return returns a single employee object
+	 */
 	public Employee getEmployeeById(String id) {
 		LOGGER.info("Entering getEmployeeById service ::");
 		ObjectMapper mapper = new ObjectMapper();
@@ -107,6 +122,10 @@ public class EmployeeService {
 		return employee;
 	}
 
+	/**
+	 * This service returns an integer indicating the highest salary of amongst all employees
+	 * @return returns a single integer indicating the highest salary of amongst all employees
+	 */
 	public int getHighestSalaryOfEmployees() {
 		LOGGER.info("Entering getHighestSalaryOfEmployees service ::");
 		ResponseEntity<EmployeeResponse> response = restTemplate.getForEntity(BASE_URL, EmployeeResponse.class);
@@ -132,6 +151,10 @@ public class EmployeeService {
 
 	}
 
+	/**
+	 * Returns a list of the top 10 employees based off of their salaries
+	 * @return returns a list of the top 10 employees based off of their salaries
+	 */
 	public List<String> getTopTenHighestEarningEmployeeNames() {
 		LOGGER.info("Entering getTopTenHighestEarningEmployeeNames service ::");
 		ResponseEntity<EmployeeResponse> response = restTemplate.getForEntity(BASE_URL, EmployeeResponse.class);
@@ -160,7 +183,15 @@ public class EmployeeService {
 		return topTenhighestSalaries;	
 	}
 
+	/**
+	 * This service returns a single employee, if created, otherwise error
+	 * @param EmployeeRequest
+	 * @return returns a single employee, if created
+	 * @throws error if failed
+	 */
 	public Employee createEmployee(EmployeeRequest employeeRequest) {
+		
+		// This API is not working because of the Server API which is not working
 		
 		//ResponseEntity<EmployeeResponse> response = restTemplate.postForEntity(BASE_URL, employeeRequest ,EmployeeResponse.class);
 		Employee employee = new Employee();
@@ -196,6 +227,12 @@ public class EmployeeService {
         return employee;
 	}
 
+	/**
+	 * This service deletes the employee based on given id
+	 * @param employee id as string
+	 * @return delete the employee based on given id
+	 * @throws error if failed
+	 */
 	public String deleteEmployeeById(String id) {
 		LOGGER.info("Entering deleteEmployeeById service ::");
 		Employee employeeToBeDeleted = getEmployeeById(id);

@@ -15,11 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.reliaquest.api.entity.Employee;
-import com.reliaquest.api.exception.EmployeeException;
-import com.reliaquest.api.exception.GeneralException;
 import com.reliaquest.api.request.EmployeeRequest;
 import com.reliaquest.api.service.EmployeeService;
-import com.reliaquest.api.utility.EmployeeUtility;
 
 
 @RestController
@@ -53,9 +50,9 @@ public class EmployeeController implements IEmployeeController<Employee, Employe
 	}
 
 	/**
-	 * Returns a single employee by a given id
+	 * Returns a single employee based on a given id
 	 * @param employee id as string
-	 * @return returns a single employee
+	 * @return returns a single employee object
 	 */
 	@Override
 	public ResponseEntity<Employee> getEmployeeById(@PathVariable("id") String id) {
