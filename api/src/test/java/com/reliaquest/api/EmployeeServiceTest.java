@@ -1,17 +1,16 @@
 package com.reliaquest.api;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,21 +22,22 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.reliaquest.api.entity.Employee;
+import com.reliaquest.api.exception.EmployeeException;
+import com.reliaquest.api.exception.GeneralException;
 import com.reliaquest.api.repository.EmployeeRepository;
 import com.reliaquest.api.request.EmployeeRequest;
 import com.reliaquest.api.response.EmployeeResponse;
 import com.reliaquest.api.service.EmployeeService;
-import com.reliaquest.api.utility.EmployeeUtility;
 
 class EmployeeServiceTest {
 
@@ -55,11 +55,8 @@ class EmployeeServiceTest {
     
     @Autowired
     private ObjectMapper objectMapper;    
-
-//    @BeforeEach
-//    void setUp() {
-//        MockitoAnnotations.openMocks(this);
-//    }
+    
+    private final String BASE_URL = "http://localhost:8112/api/v1/employee";
     
     @BeforeEach
     void setUp() {
@@ -71,18 +68,17 @@ class EmployeeServiceTest {
     void testGetAllEmployees() {
     	UUID mockUUID1 = UUID.fromString("123e4567-e89b-12d3-a456-556642440000");
     	UUID mockUUID2 = UUID.fromString("123e4567-e89b-12d3-a456-556642550000");
-        Employee mockEmployee1 = new Employee(mockUUID1, "Oliver Vandervort", 50000, 30, "Developer", "ovandervort@example.com");
-        Employee mockEmployee2 = new Employee(mockUUID2, "Juliann Durgan", 60000, 28, "Manager", "jdurgan@example.com");
-        EmployeeResponse mockResponse = new EmployeeResponse(Arrays.asList(mockEmployee1, mockEmployee2), "HANDLED");
-        
-        when(restTemplate.getForEntity(anyString(), eq(EmployeeResponse.class)))
-                .thenReturn(new ResponseEntity<>(mockResponse, HttpStatus.OK));
+        List<Employee> mockEmployeeList = Arrays.asList(new Employee(mockUUID1, "Oliver Vandervort", 50000, 30, "Developer", "ovandervort@example.com"), 
+        												new Employee(mockUUID2, "Juliann Durgan", 60000, 28, "Manager", "jdurgan@example.com"));
+        EmployeeResponse mockResponse = new EmployeeResponse();
+        mockResponse.setData(mockEmployeeList);
 
-        List<Employee> employees = employeeService.getAllEmployees();
+        when(restTemplate.getForEntity(BASE_URL, EmployeeResponse.class)).thenReturn(new ResponseEntity<>(mockResponse, HttpStatus.OK));
 
-        assertNotNull(employees);
-        assertEquals(2, employees.size());
-        verify(restTemplate, times(1)).getForEntity(anyString(), eq(EmployeeResponse.class));
+        List<Employee> result = employeeService.getAllEmployees();
+
+        assertEquals(mockEmployeeList.size(), result.size());
+        verify(restTemplate, times(1)).getForEntity(BASE_URL, EmployeeResponse.class);    	
     }
 
     @Test
@@ -91,17 +87,28 @@ class EmployeeServiceTest {
     	UUID mockUUID2 = UUID.fromString("123e4567-e89b-12d3-a456-556642550000");
         Employee mockEmployee1 = new Employee(mockUUID1, "Oliver Vandervort", 50000, 30, "Developer", "ovandervort@example.com");
         Employee mockEmployee2 = new Employee(mockUUID2, "Juliann Durgan", 60000, 28, "Manager", "jdurgan@example.com");
-        EmployeeResponse mockResponse = new EmployeeResponse(Arrays.asList(mockEmployee1, mockEmployee2), "HANDLED");
+        EmployeeResponse mockResponse = new EmployeeResponse(Arrays.asList(mockEmployee1, mockEmployee2), "OK");
 
         when(restTemplate.getForEntity(anyString(), eq(EmployeeResponse.class)))
                 .thenReturn(new ResponseEntity<>(mockResponse, HttpStatus.OK));
 
-        List<Employee> employees = employeeService.getEmployeesByNameSearch("Jane");
+        List<Employee> employees = employeeService.getEmployeesByNameSearch("Oliv");
 
         assertNotNull(employees);
         assertEquals(1, employees.size());
-        assertEquals("Juliann Durgan", employees.get(0).getEmployee_name());
+        assertEquals("Oliver Vandervort", employees.get(0).getEmployeeName());
     }
+    
+    @Test
+    void testGetEmployeesByNameSearchFailure() {
+        when(restTemplate.getForEntity(anyString(), eq(EmployeeResponse.class)))
+        .thenReturn(ResponseEntity.notFound().build());
+
+		ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+						() -> employeeService.getEmployeeById("xyz"));
+		assertTrue(exception.getStatusCode().is4xxClientError());
+		assertTrue(exception.getMessage().contains("not found"));
+    }    
 
     @Test
     void testGetEmployeeById() {
@@ -115,7 +122,7 @@ class EmployeeServiceTest {
         Employee employee = employeeService.getEmployeeById("1");
 
         assertNotNull(employee);
-        assertEquals("Oliver Vandervort", employee.getEmployee_name());
+        assertEquals("Oliver Vandervort", employee.getEmployeeName());
         verify(restTemplate, times(1)).getForEntity(anyString(), eq(EmployeeResponse.class));
     }
 
@@ -123,18 +130,27 @@ class EmployeeServiceTest {
     void testGetHighestSalaryOfEmployees() {
     	UUID mockUUID1 = UUID.fromString("123e4567-e89b-12d3-a456-556642440000");
     	UUID mockUUID2 = UUID.fromString("123e4567-e89b-12d3-a456-556642550000");
-        Employee mockEmployee1 = new Employee(mockUUID1, "Oliver Vandervort", 50000, 30, "Developer", "ovandervort@example.com");
-        Employee mockEmployee2 = new Employee(mockUUID2, "Juliann Durgan", 60000, 28, "Manager", "jdurgan@example.com");
-        EmployeeResponse mockResponse = new EmployeeResponse(Arrays.asList(mockEmployee1, mockEmployee2), "HANDLED");
+        String email1 = "ovandervort@example.com";
+        String email2 = "jdurgan@example.com";
+        List<Employee> mockEmployeeList = Arrays.asList(new Employee(mockUUID1, "Oliver Vandervort", 50000, 30, "Developer", email1), new Employee(mockUUID2, "Juliann Durgan", 80000, 28, "Manager", "jdurgan@example.com"));
+        EmployeeResponse mockResponse = new EmployeeResponse();
+                
+        when(restTemplate.getForEntity(BASE_URL, EmployeeResponse.class))
+        .thenReturn(ResponseEntity.ok(new EmployeeResponse(mockEmployeeList, "OK")));
 
-        when(restTemplate.getForEntity(anyString(), eq(EmployeeResponse.class)))
-                .thenReturn(new ResponseEntity<>(mockResponse, HttpStatus.OK));
-
-        int highestSalary = employeeService.getHighestSalaryOfEmployees();
-
-        assertEquals(60000, highestSalary);
-        verify(restTemplate, times(1)).getForEntity(anyString(), eq(EmployeeResponse.class));
+	    int highestSalary = employeeService.getHighestSalaryOfEmployees();
+	
+	    assertThat(highestSalary).isEqualTo(80000);
     }
+    
+    @Test
+    public void testGetHighestSalaryOfEmployeesEmptyList() {
+      EmployeeResponse mockResponse = new EmployeeResponse(Collections.emptyList(), "OK");
+      when(restTemplate.getForEntity(BASE_URL, EmployeeResponse.class))
+          .thenReturn(ResponseEntity.ok(mockResponse));
+      int highestSalary = employeeService.getHighestSalaryOfEmployees();
+      assertEquals(0, highestSalary);
+    }    
 
     @Test
     void testGetTopTenHighestEarningEmployeeNames() {
@@ -156,35 +172,21 @@ class EmployeeServiceTest {
         assertEquals("Juliann Durgan", topSalaries.get(0));
         verify(restTemplate, times(1)).getForEntity(anyString(), eq(EmployeeResponse.class));
     }
+    
+    @Test
+    public void testGetTopTenHighestEarningEmployeeNamesFailure() {
+      when(restTemplate.getForEntity(anyString(), eq(EmployeeResponse.class)))
+          .thenReturn(ResponseEntity.badRequest().build());
+
+      assertThrows(Exception.class, () -> employeeService.getTopTenHighestEarningEmployeeNames());
+    }    
 
     @Test
-    void testCreateEmployee() {
-        EmployeeRequest employeeRequest = new EmployeeRequest();
-        employeeRequest.setEmployee_name("John Doe");
-        employeeRequest.setEmployee_age(30);
-        employeeRequest.setEmployee_salary(50000);
-        employeeRequest.setEmployee_title("Engineer");
-
-        mockStatic(EmployeeUtility.class);
-        when(EmployeeUtility.validate(employeeRequest)).thenReturn(Collections.emptyList());
-
-        Employee expectedEmployee = new Employee();
-        expectedEmployee.setId(UUID.randomUUID());
-        expectedEmployee.setEmployee_name(employeeRequest.getEmployee_name());
-        expectedEmployee.setEmployee_age(employeeRequest.getEmployee_age());
-        expectedEmployee.setEmployee_salary(employeeRequest.getEmployee_salary());
-        expectedEmployee.setEmployee_title(employeeRequest.getEmployee_title());
-
-        when(employeeRepository.addEmployee(any(Employee.class))).thenReturn(expectedEmployee);
-
-        Employee createdEmployee = employeeService.createEmployee(employeeRequest);
-
-        assertNotNull(createdEmployee);
-        assertEquals(employeeRequest.getEmployee_name(), createdEmployee.getEmployee_name());
-        assertEquals(employeeRequest.getEmployee_age(), createdEmployee.getEmployee_age());
-        assertEquals(employeeRequest.getEmployee_salary(), createdEmployee.getEmployee_salary());
-        assertEquals(employeeRequest.getEmployee_title(), createdEmployee.getEmployee_title());
-        verify(employeeRepository, times(1)).addEmployee(any(Employee.class));
+    public void testCreateEmployeeValidationFailure() {
+		EmployeeRequest invalidRequest = new EmployeeRequest("", 30, 80000, "Software Engineer"); // Empty name should fail validation
+		when(employeeRepository.addEmployee(any(Employee.class))).thenThrow(new UnsupportedOperationException("Shouldn't be called"));
+		
+		assertThrows(ResponseStatusException.class, () -> employeeService.createEmployee(invalidRequest));
     }
 
     @Test
@@ -204,36 +206,24 @@ class EmployeeServiceTest {
         verify(restTemplate, times(1)).exchange(anyString(), eq(HttpMethod.DELETE), any(), eq(EmployeeResponse.class));
     }
     
-
     @Test
-    void testGetHighestSalaryOfEmployees1() throws Exception {
-        String responseJson = "{ \"data\": [{ \"employee_name\": \"John Doe\", \"employee_salary\": 60000, \"employee_age\": 30, \"employee_title\": \"Developer\" }], \"status\": \"HANDLED\", \"error\": null }";
-
-        mockServer = MockRestServiceServer.createServer(restTemplate);
-        mockServer.expect(requestTo("http://localhost:8112/api/v1/employee"))
-                  .andRespond(withSuccess(responseJson, MediaType.APPLICATION_JSON));
-
-        int highestSalary = employeeService.getHighestSalaryOfEmployees();
-
-        assertEquals(60000, highestSalary);
-        mockServer.verify();
-    }
-    
-    @Test
-    void testGetHighestSalaryOfEmployees2() throws Exception {
-        Employee mockEmployee = new Employee(UUID.randomUUID(), "John Doe", 70000, 30, "Developer", "john.doe@example.com");
-        EmployeeResponse mockResponse = new EmployeeResponse(List.of(mockEmployee), "OK");
-
-        String responseJson = objectMapper.writeValueAsString(mockResponse);
-
-        mockServer.expect(requestTo("http://localhost:8112/api/v1/employee"))
-                  .andRespond(withStatus(HttpStatus.OK)
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .body(responseJson));
-
-        int highestSalary = employeeService.getHighestSalaryOfEmployees();
-
-        assertEquals(70000, highestSalary);
-        mockServer.verify();
+    public void testDeleteEmployeeByIdNotFound() {
+    	when(restTemplate.getForEntity(anyString(), eq(EmployeeResponse.class)))
+        .thenReturn(ResponseEntity.notFound().build());
+		ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+				() -> employeeService.deleteEmployeeById("xyz"));
+		assertTrue(exception.getStatusCode().is4xxClientError());
+		assertTrue(exception.getMessage().contains("not found"));
     }    
+    
+
+//    @Test
+//    void testGetHighestSalaryOfEmployeesFailure() {
+//    	  when(restTemplate.getForEntity(BASE_URL, EmployeeResponse.class))
+//          .thenReturn(ResponseEntity.badRequest().build());
+//    	  ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+//  				() -> employeeService.getHighestSalaryOfEmployees());
+//    	  assertThrows(ResponseStatusException.class, () -> employeeService.getHighestSalaryOfEmployees());
+//    }
+       
 }

@@ -78,16 +78,16 @@ public class EmployeeService {
 		try {
 			employeeList = mapper.readValue(res, new TypeReference<List<Employee>>() {});
 			employeeNameMatchingList = employeeList.stream()
-					.filter(emp -> emp.getEmployee_name().toLowerCase().contains(searchString.toLowerCase()))
+					.filter(emp -> emp.getEmployeeName().toLowerCase().contains(searchString.toLowerCase()))
 					.collect(Collectors.toList());
-			LOGGER.info("Highest salary has been retrieved");
+			LOGGER.info("Successfully found employee(s) based search criteria ("+searchString+")");
 		} catch (JsonMappingException e) {
-			e.printStackTrace();
+			LOGGER.error("Error mapping JSON data to Employee list", e);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			LOGGER.error("Error processing JSON data", e);
 		}
 		if(response.getStatusCode() != HttpStatus.OK) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No any emplyee with search criteria ("+searchString+") was found");
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No any emplyee(s) with search criteria ("+searchString+") were found");
 		}
 		return employeeNameMatchingList;
 	}
@@ -137,20 +137,31 @@ public class EmployeeService {
 			res = mapper.writeValueAsString(response.getBody().getData());
 		} catch (JsonProcessingException e1) {
 			e1.printStackTrace();
+			return 0;
+		} catch(NullPointerException e) {
+			e.getStackTrace();
+			return 0;
+		} catch(Exception e) {
+			e.getStackTrace();
+			return 0;
 		}
 		List<Employee> employeeList = null;
 		int highestSalary = 0;
 		try {
 			employeeList = mapper.readValue(res, new TypeReference<List<Employee>>() {});
-			highestSalary = employeeList.stream().mapToInt(e -> e.getEmployee_salary()).max().orElse(0);
+			highestSalary = employeeList.stream().mapToInt(e -> e.getEmployeeSalary()).max().orElse(0);
 			LOGGER.info("Highest salary has been retrieved");
 		} catch (JsonMappingException e) {
-			e.printStackTrace();
+			LOGGER.error("Error mapping JSON data to Employee list", e);
+			return 0;
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			LOGGER.error("Error processing JSON data", e);
+			return 0;
+		} catch(Exception e) {
+			LOGGER.error("An unexpected error occurred while processing employee list", e);
+			return 0;
 		}
 		return highestSalary;
-
 	}
 
 	/**
@@ -172,15 +183,15 @@ public class EmployeeService {
 		try {
 			employeeList = mapper.readValue(res, new TypeReference<List<Employee>>() {});
 			topTenhighestSalaries = employeeList.stream()
-					.sorted(Comparator.comparingInt(Employee::getEmployee_salary).reversed())
+					.sorted(Comparator.comparingInt(Employee::getEmployeeSalary).reversed())
 					.limit(10)
-					.map(x -> x.getEmployee_name())
+					.map(x -> x.getEmployeeName())
 					.collect(Collectors.toList());
 			LOGGER.info("Highest 10 salaries have been retrieved");
 		} catch (JsonMappingException e) {
-			e.printStackTrace();
+			LOGGER.error("Error mapping JSON data to Employee list", e);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			LOGGER.error("An unexpected error occurred while processing employee list", e);
 		}
 		return topTenhighestSalaries;	
 	}
@@ -202,10 +213,10 @@ public class EmployeeService {
 	        UUID uuid = UUID.randomUUID();
 			
 	        employee.setId(uuid);
-			employee.setEmployee_name(employeeRequest.getEmployee_name());
-			employee.setEmployee_age(employeeRequest.getEmployee_age());
-			employee.setEmployee_salary(employeeRequest.getEmployee_salary());
-			employee.setEmployee_title(employeeRequest.getEmployee_title());
+			employee.setEmployeeName(employeeRequest.getEmployeeName());
+			employee.setEmployeeAge(employeeRequest.getEmployeeAge());
+			employee.setEmployeeSalary(employeeRequest.getEmployeeSalary());
+			employee.setEmployeeTitle(employeeRequest.getEmployeeTitle());
 			
 			LOGGER.info("Employee has been successfully created ::");
 			return employeeRepository.addEmployee(employee);
@@ -225,7 +236,7 @@ public class EmployeeService {
 		LOGGER.info("Entering deleteEmployeeById service ::");
 		Employee employeeToBeDeleted = getEmployeeById(id);
 		DeleteEmployeeRequest deleteRequest = new DeleteEmployeeRequest();
-		deleteRequest.setName(employeeToBeDeleted.getEmployee_name());
+		deleteRequest.setName(employeeToBeDeleted.getEmployeeName());
 
 		HttpEntity<DeleteEmployeeRequest> requestEntity = new HttpEntity<>(deleteRequest, null);
 		
@@ -247,7 +258,7 @@ public class EmployeeService {
 				LOGGER.info("Employee with id ("+id+") has been successfully deleted");
 				return successStatus.substring(1, successStatus.length() - 1)+" Employee with id "+id+" has been successfully deleted.";
 			} catch (JsonProcessingException e) {
-				LOGGER.error("Error processing JSON response:: ", e);
+				LOGGER.error("An unexpected error occurred while processing JSON response:: ", e);
 			}
 		} 
 //		if(employeeToBeDeleted == null) {

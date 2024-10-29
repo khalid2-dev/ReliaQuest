@@ -26,19 +26,19 @@ public class EmployeeUtility {
 		
 		List<String> error = new ArrayList<>();
 		
-		if(employeeRequest.getEmployee_name() == null || employeeRequest.getEmployee_name().isEmpty()) {
+		if(employeeRequest.getEmployeeName() == null || employeeRequest.getEmployeeName().isEmpty()) {
 			error.add("Name must not be empty");
 		}
 
-		if(!(employeeRequest.getEmployee_age() >= 16 && employeeRequest.getEmployee_age() <= 75)) {
+		if(!(employeeRequest.getEmployeeAge() >= 16 && employeeRequest.getEmployeeAge() <= 75)) {
 			error.add("Age must be min 16 and max 75");
 		}		
 		
-		if(employeeRequest.getEmployee_salary() <= 0) {
+		if(employeeRequest.getEmployeeSalary() <= 0) {
 			error.add("Salar should be greater than zero (0)");
 		}	
 
-		if(employeeRequest.getEmployee_title() == null || employeeRequest.getEmployee_title().isEmpty()) {
+		if(employeeRequest.getEmployeeTitle() == null || employeeRequest.getEmployeeTitle().isEmpty()) {
 			error.add("Title must not be empty");
 		}
 		

@@ -11,33 +11,33 @@ public class EmployeeRequest {
 	private String id;
 	
 	@NotNull(message = "Name must not be empty")
-    private String employee_name;
+    private String employeeName;
 	
 	@Min(value = 1, message = "Salary must be greater than zero")
 	@NotNull
-    private int employee_salary;
+    private int employeeSalary;
 	
 	@Min(value = 16, message = "Age must be at least 16")
 	@Max(value = 75, message = "Age must not be more than 75")
 	@NotNull
-    private int employee_age;
+    private int employeeAge;
 	
     @NotNull(message = "Title must not be empty")
-    private String employee_title;
+    private String employeeTitle;
     
-    private String employee_email;
+    private String employeeEmail;
     
     public EmployeeRequest() {
     }
     
-	public EmployeeRequest(@NotNull(message = "Name must not be empty") String employee_name,
-			@Min(value = 1, message = "Salary must be greater than zero") @NotNull int employee_salary,
-			@Min(value = 16, message = "Age must be at least 16") @Max(value = 75, message = "Age must not be more than 75") @NotNull int employee_age,
-			@NotNull(message = "Title must not be empty") String employee_title) {
-		this.employee_name = employee_name;
-		this.employee_salary = employee_salary;
-		this.employee_age = employee_age;
-		this.employee_title = employee_title;
+	public EmployeeRequest(@NotNull(message = "Name must not be empty") String employeeName,
+			@Min(value = 1, message = "Salary must be greater than zero") @NotNull int employeeSalary,
+			@Min(value = 16, message = "Age must be at least 16") @Max(value = 75, message = "Age must not be more than 75") @NotNull int employeeAge,
+			@NotNull(message = "Title must not be empty") String employeeTitle) {
+		this.employeeName = employeeName;
+		this.employeeSalary = employeeSalary;
+		this.employeeAge = employeeAge;
+		this.employeeTitle = employeeTitle;
 	}
 	public String getId() {
 		return id;
@@ -45,35 +45,35 @@ public class EmployeeRequest {
 	public void setId(String id) {
 		this.id = id;
 	}
-	public String getEmployee_name() {
-		return employee_name;
+	public String getEmployeeName() {
+		return employeeName;
 	}
-	public void setEmployee_name(String employee_name) {
-		this.employee_name = employee_name;
+	public void setEmployeeName(String employeeName) {
+		this.employeeName = employeeName;
 	}
-	public int getEmployee_salary() {
-		return employee_salary;
+	public int getEmployeeSalary() {
+		return employeeSalary;
 	}
-	public void setEmployee_salary(int employee_salary) {
-		this.employee_salary = employee_salary;
+	public void setEmployeeSalary(int employeeSalary) {
+		this.employeeSalary = employeeSalary;
 	}
-	public int getEmployee_age() {
-		return employee_age;
+	public int getEmployeeAge() {
+		return employeeAge;
 	}
-	public void setEmployee_age(int employee_age) {
-		this.employee_age = employee_age;
+	public void setEmployeeAge(int employeeAge) {
+		this.employeeAge = employeeAge;
 	}
-	public String getEmployee_title() {
-		return employee_title;
+	public String getEmployeeTitle() {
+		return employeeTitle;
 	}
-	public void setEmployee_title(String employee_title) {
-		this.employee_title = employee_title;
+	public void setEmployeeTitle(String employeeTitle) {
+		this.employeeTitle = employeeTitle;
 	}
-	public Optional<String> getEmployee_email() {
-		return Optional.ofNullable(employee_email);
+	public Optional<String> getEmployeeEmail() {
+		return Optional.ofNullable(employeeEmail);
 	}
-	public void setEmployee_email(String employee_email) {
-		this.employee_email = employee_email;
+	public void setEmployeeEmail(String employeeEmail) {
+		this.employeeEmail = employeeEmail;
 	}
 
 }

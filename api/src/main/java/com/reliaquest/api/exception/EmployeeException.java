@@ -33,5 +33,11 @@ public class EmployeeException {
 		ErrorResponse response = new ErrorResponse("An unexpected error occured.", List.of(ex.getMessage()));
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 	}
+	
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ErrorResponse> rateLimitException(Exception e){
+		ErrorResponse response = new ErrorResponse("Too many requests. Please try again later.", null);
+		return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);		
+	}
 
 }
