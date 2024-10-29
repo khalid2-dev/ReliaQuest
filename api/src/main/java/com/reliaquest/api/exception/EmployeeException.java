@@ -2,15 +2,19 @@ package com.reliaquest.api.exception;
 
 import java.util.List;
 
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.reliaquest.api.response.ErrorResponse;
 
-@ControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
+@ControllerAdvice(annotations = RestController.class)
 public class EmployeeException {
 	
 	@ExceptionHandler(ResponseStatusException.class)

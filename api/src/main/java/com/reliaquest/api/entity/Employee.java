@@ -1,6 +1,4 @@
 package com.reliaquest.api.entity;
-import javax.validation.constraints.*;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Optional;

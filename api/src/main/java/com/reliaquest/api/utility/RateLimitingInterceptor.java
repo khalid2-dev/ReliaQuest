@@ -7,12 +7,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class RateLimitingInterceptor implements HandlerInterceptor {
 
-    private static final int MAX_REQUESTS = 10;
+	static Random random = new Random(); 
+    private static final int MAX_REQUESTS = random.nextInt(15-5)+5;
     private static final long TIME_WINDOW = 30 * 1000;
 
     private final Map<String, RequestInfo> requestCounts = new ConcurrentHashMap<>();

@@ -12,6 +12,17 @@ public class EmployeeResponse {
 	@JsonProperty("status")
 	private String status;
 	
+	@JsonProperty("error")
+	private List<String> error;
+	
+	public EmployeeResponse() {	
+	}
+	
+	public EmployeeResponse(Object data, String status) {
+		this.data = data;
+		this.status = status;
+	}
+	
 	public Object getData() {
 		return data;
 	}
@@ -23,6 +34,14 @@ public class EmployeeResponse {
 	}
 	public void setStatus(String status) {
 		this.status = status;
+	}
+
+	public List<String> getError() {
+		return error;
+	}
+
+	public void setError(List<String> error) {
+		this.error = error;
 	}
 	
 }

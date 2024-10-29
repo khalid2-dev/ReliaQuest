@@ -17,9 +17,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.reliaquest.api.controller.EmployeeController;
-import com.reliaquest.api.controller.error;
 import com.reliaquest.api.entity.Employee;
-import com.reliaquest.api.repository.EmployeeRepository;
 import com.reliaquest.api.request.DeleteEmployeeRequest;
 import com.reliaquest.api.request.EmployeeRequest;
 import com.reliaquest.api.response.EmployeeResponse;
@@ -40,9 +38,6 @@ public class EmployeeService {
     public EmployeeService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-
-	@Autowired
-	private EmployeeRepository employeeRepository;
 	
     /**
      * This service returns a list of ALL employees
@@ -58,7 +53,7 @@ public class EmployeeService {
 	}
 
 	/**
-	 * This service returns all employees whose name contains or matches the string search provided
+	 * This service calls an external API and returns all employees whose name contains or matches the string search provided
 	 * @param name as search string
 	 * @return returns a list of employees whose name contains or matches the string input provided
 	 */
@@ -92,19 +87,27 @@ public class EmployeeService {
 	}
 
 	/**
-	 * This service returns a single employee based on a given id
+	 * This service calls an external API and returns a single employee based on a given id
 	 * @param employee id as string
 	 * @return returns a single employee object
 	 */
 	public Employee getEmployeeById(String id) {
 		LOGGER.info("Entering getEmployeeById service ::");
+		//EmployeeResponse empResponseEntity = new EmployeeResponse();
 		ObjectMapper mapper = new ObjectMapper();
-		ResponseEntity<EmployeeResponse> response = restTemplate.getForEntity(BASE_URL+"/"+id, EmployeeResponse.class);
+		//ResponseEntity<EmployeeResponse> response = restTemplate.getForEntity(BASE_URL+"/"+id, EmployeeResponse.class);
 		String res = null;
 		try {
+			ResponseEntity<EmployeeResponse> response = restTemplate.getForEntity(BASE_URL+"/"+id, EmployeeResponse.class);
+
 			res = mapper.writeValueAsString(response.getBody().getData());
-		} catch (JsonProcessingException e1) {
-			e1.printStackTrace();
+		} catch (JsonProcessingException e) {System.out.println("NOT FOUND ::::::::::::::");
+			LOGGER.error("Error processing JSON response:: ", e);
+		} catch(Exception e) {
+			e.getMessage();
+			System.out.println("NOT FOUND ::::::::::::::");
+			
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee with id "+id+" not found");
 		}
         JSONObject jsonObject = new JSONObject(res);
         String formattedJson = jsonObject.toString();
@@ -113,22 +116,23 @@ public class EmployeeService {
 		try {
 			employee = mapper.readValue(formattedJson, Employee.class);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			LOGGER.error("Error processing JSON response:: ", e);
 		}
-		if(response.getStatusCode() != HttpStatus.OK) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee with id "+id+" not found");
-		}
+//		if(response.getStatusCode() != HttpStatus.OK) {System.out.println("NOT FOUND ::::::::::::::");
+//			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee with id "+id+" not found");
+//		}
 		LOGGER.info("Employee details for employee id "+id+": "+res);
 		return employee;
 	}
 
 	/**
-	 * This service returns an integer indicating the highest salary of amongst all employees
+	 * This service calls an external API and returns an integer indicating the highest salary of amongst all employees
 	 * @return returns a single integer indicating the highest salary of amongst all employees
 	 */
 	public int getHighestSalaryOfEmployees() {
 		LOGGER.info("Entering getHighestSalaryOfEmployees service ::");
 		ResponseEntity<EmployeeResponse> response = restTemplate.getForEntity(BASE_URL, EmployeeResponse.class);
+		System.out.println(response.getBody().toString());
 		ObjectMapper mapper = new ObjectMapper();
 		String res = null;
 		try {
@@ -152,7 +156,7 @@ public class EmployeeService {
 	}
 
 	/**
-	 * Returns a list of the top 10 employees based off of their salaries
+	 * This service calls an external API and returns a list of the top 10 employees based off of their salaries
 	 * @return returns a list of the top 10 employees based off of their salaries
 	 */
 	public List<String> getTopTenHighestEarningEmployeeNames() {
@@ -174,7 +178,7 @@ public class EmployeeService {
 					.limit(10)
 					.map(x -> x.getEmployee_name())
 					.collect(Collectors.toList());
-			LOGGER.info("Highest salary has been retrieved");
+			LOGGER.info("Highest 10 salaries have been retrieved");
 		} catch (JsonMappingException e) {
 			e.printStackTrace();
 		} catch (JsonProcessingException e) {
@@ -184,7 +188,7 @@ public class EmployeeService {
 	}
 
 	/**
-	 * This service returns a single employee, if created, otherwise error
+	 * This service calls an external API and returns a single employee, if created, otherwise error
 	 * @param EmployeeRequest
 	 * @return returns a single employee, if created
 	 * @throws error if failed
@@ -228,7 +232,7 @@ public class EmployeeService {
 	}
 
 	/**
-	 * This service deletes the employee based on given id
+	 * This service calls an external API and deletes the employee based on given id
 	 * @param employee id as string
 	 * @return delete the employee based on given id
 	 * @throws error if failed
@@ -238,7 +242,7 @@ public class EmployeeService {
 		Employee employeeToBeDeleted = getEmployeeById(id);
 		DeleteEmployeeRequest deleteRequest = new DeleteEmployeeRequest();
 		deleteRequest.setName(employeeToBeDeleted.getEmployee_name());
-		
+
 		HttpEntity<DeleteEmployeeRequest> requestEntity = new HttpEntity<>(deleteRequest, null);
 		
 		ResponseEntity<EmployeeResponse> response = restTemplate.exchange(BASE_URL, HttpMethod.DELETE, requestEntity, EmployeeResponse.class);
@@ -250,16 +254,19 @@ public class EmployeeService {
 		try {
 			data = (String) mapper.writeValueAsString(response.getBody().getData());
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			LOGGER.error("Error processing JSON response:: ", e);
 		}
 		
 		if(data.contains("true")) {
 			try {
+				String successStatus = mapper.writeValueAsString(response.getBody().getStatus());
 				LOGGER.info("Employee with id # "+id+" has been successfully deleted");
-				return mapper.writeValueAsString(response.getBody().getStatus());
+				return successStatus.substring(1, successStatus.length() - 1)+" Employee with id "+id+" has been successfully deleted.";
 			} catch (JsonProcessingException e) {
-				e.printStackTrace();
+				LOGGER.error("Error processing JSON response:: ", e);
 			}
+		} if(employeeToBeDeleted.equals(null)) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to delete employee with id "+id+". Employee not found.");
 		}
 		
 		return status;

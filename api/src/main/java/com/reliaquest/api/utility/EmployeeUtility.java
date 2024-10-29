@@ -73,27 +73,37 @@ public class EmployeeUtility {
         return employee;
 	}
 	
-	public static List<Employee> jsonFotmatterToEmployeeList(ResponseEntity<EmployeeResponse> response){
-        ObjectMapper mapper = new ObjectMapper();
-        String res = null;
-		try {
-			res = mapper.writeValueAsString(response.getBody().getData());
-			System.out.println("RESPONSE: "+res);
-		} catch (JsonProcessingException e1) {
-			e1.printStackTrace();
-		}
-        JSONObject jsonObject = new JSONObject(res);
-        String formattedJson = jsonObject.toString();
-        System.out.println(formattedJson);
-        try {
-            // Use ObjectMapper to convert JSON string to List<Employee>
-            return mapper.readValue(formattedJson, new TypeReference<List<Employee>>() {});
-        } catch (Exception e) {
-            e.getMessage();
-            return Collections.emptyList();
-        }
-
-        //return formattedJson;
-	}
+//	public static List<Employee> jsonFotmatterToEmployeeList(ResponseEntity<EmployeeResponse> response){
+//        ObjectMapper mapper = new ObjectMapper();
+//        String res = null;
+//		try {
+//			res = mapper.writeValueAsString(response.getBody().getData());
+//			System.out.println("RESPONSE: "+res);
+//		} catch (JsonProcessingException e1) {
+//			e1.printStackTrace();
+//		}
+//        JSONObject jsonObject = new JSONObject(res);
+//        String formattedJson = jsonObject.toString();
+//        System.out.println(formattedJson);
+//        try {
+//            // Use ObjectMapper to convert JSON string to List<Employee>
+//            return mapper.readValue(formattedJson, new TypeReference<List<Employee>>() {});
+//        } catch (Exception e) {
+//            e.getMessage();
+//            return Collections.emptyList();
+//        }
+//        
+//        try {
+//            // Parse the outer structure
+//            EmployeeResponse empResponse = mapper.readValue(res, EmployeeResponse.class);
+//            // Access the list of employees in the "data" field
+//            return empResponse.getData();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return Collections.emptyList();
+//        }
+//
+//        //return formattedJson;
+//	}
 
 }
