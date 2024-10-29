@@ -56,9 +56,7 @@ public class EmployeeController implements IEmployeeController<Employee, Employe
 	 */
 	@Override
 	public ResponseEntity<Employee> getEmployeeById(@PathVariable("id") String id) {
-		//employeeService.getEmployeeById(id);
 		LOGGER.info("Entering getEmployeeById ::");
-		LOGGER.info("ID to search :: "+id);
 		return ResponseEntity.ok(employeeService.getEmployeeById(id));
 	}
 

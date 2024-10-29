@@ -2,6 +2,7 @@ package com.reliaquest.api.service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.commons.logging.Log;
@@ -18,9 +19,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.reliaquest.api.controller.EmployeeController;
 import com.reliaquest.api.entity.Employee;
+import com.reliaquest.api.repository.EmployeeRepository;
 import com.reliaquest.api.request.DeleteEmployeeRequest;
 import com.reliaquest.api.request.EmployeeRequest;
 import com.reliaquest.api.response.EmployeeResponse;
+import com.reliaquest.api.utility.EmployeeUtility;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -33,6 +36,9 @@ public class EmployeeService {
 	
     private final String BASE_URL = "http://localhost:8112/api/v1/employee";
     private final RestTemplate restTemplate;
+    
+    @Autowired
+    private EmployeeRepository employeeRepository;
     
     @Autowired
     public EmployeeService(RestTemplate restTemplate) {
@@ -93,20 +99,16 @@ public class EmployeeService {
 	 */
 	public Employee getEmployeeById(String id) {
 		LOGGER.info("Entering getEmployeeById service ::");
-		//EmployeeResponse empResponseEntity = new EmployeeResponse();
 		ObjectMapper mapper = new ObjectMapper();
-		//ResponseEntity<EmployeeResponse> response = restTemplate.getForEntity(BASE_URL+"/"+id, EmployeeResponse.class);
 		String res = null;
 		try {
 			ResponseEntity<EmployeeResponse> response = restTemplate.getForEntity(BASE_URL+"/"+id, EmployeeResponse.class);
 
 			res = mapper.writeValueAsString(response.getBody().getData());
-		} catch (JsonProcessingException e) {System.out.println("NOT FOUND ::::::::::::::");
+		} catch (JsonProcessingException e) {
 			LOGGER.error("Error processing JSON response:: ", e);
 		} catch(Exception e) {
-			e.getMessage();
-			System.out.println("NOT FOUND ::::::::::::::");
-			
+			e.getMessage();			
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee with id "+id+" not found");
 		}
         JSONObject jsonObject = new JSONObject(res);
@@ -118,9 +120,6 @@ public class EmployeeService {
 		} catch (JsonProcessingException e) {
 			LOGGER.error("Error processing JSON response:: ", e);
 		}
-//		if(response.getStatusCode() != HttpStatus.OK) {System.out.println("NOT FOUND ::::::::::::::");
-//			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee with id "+id+" not found");
-//		}
 		LOGGER.info("Employee details for employee id "+id+": "+res);
 		return employee;
 	}
@@ -132,7 +131,6 @@ public class EmployeeService {
 	public int getHighestSalaryOfEmployees() {
 		LOGGER.info("Entering getHighestSalaryOfEmployees service ::");
 		ResponseEntity<EmployeeResponse> response = restTemplate.getForEntity(BASE_URL, EmployeeResponse.class);
-		System.out.println(response.getBody().toString());
 		ObjectMapper mapper = new ObjectMapper();
 		String res = null;
 		try {
@@ -188,47 +186,33 @@ public class EmployeeService {
 	}
 
 	/**
-	 * This service calls an external API and returns a single employee, if created, otherwise error
+	 * This service calls the employee repository and returns a single employee, if created, otherwise error
 	 * @param EmployeeRequest
 	 * @return returns a single employee, if created
 	 * @throws error if failed
 	 */
 	public Employee createEmployee(EmployeeRequest employeeRequest) {
-		
-		// This API is not working because of the Server API which is not working
-		
-		//ResponseEntity<EmployeeResponse> response = restTemplate.postForEntity(BASE_URL, employeeRequest ,EmployeeResponse.class);
+		// The Server API is not working, so calling the employee repository instead		
+		LOGGER.info("Entering createEmployee service ::");
+		List<String> validations = EmployeeUtility.validate(employeeRequest);
 		Employee employee = new Employee();
-//		List<String> error = EmployeeUtility.validate(employeeRequest);
-//		
-//		if(!error.isEmpty()) {
-//			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Validation failed", error));
-//		}
-		
-//		if(employeeRequest.getEmployee_name() == null || employeeRequest.getEmployee_name().isEmpty()) {
-//			throw new GeneralException("Name must not be empty");
-//		}
-//
-//		if(!(employeeRequest.getEmployee_age() >= 16 && employeeRequest.getEmployee_age() <= 75)) {
-//			throw new GeneralException("Age must be min 16 and max 75");
-//		}		
-//		
-//		if(employeeRequest.getEmployee_salary() <= 0) {
-//			throw new GeneralException("Salar should be greater than zero (0)");
-//		}	
-//
-//		if(employeeRequest.getEmployee_title() == null || employeeRequest.getEmployee_title().isEmpty()) {
-//			throw new GeneralException("Title must not be empty");
-//		}
-		
-		employee.setEmployee_name(employeeRequest.getEmployee_name());
-		employee.setEmployee_age(employeeRequest.getEmployee_age());
-		employee.setEmployee_salary(employeeRequest.getEmployee_salary());
-		employee.setEmployee_title(employeeRequest.getEmployee_title());
-		
-        ResponseEntity<EmployeeResponse> response = restTemplate.postForEntity(BASE_URL, employee, EmployeeResponse.class);
-
-        return employee;
+		if(validations.isEmpty()) {
+			LOGGER.info("Validation successful ::");
+			
+	        UUID uuid = UUID.randomUUID();
+			
+	        employee.setId(uuid);
+			employee.setEmployee_name(employeeRequest.getEmployee_name());
+			employee.setEmployee_age(employeeRequest.getEmployee_age());
+			employee.setEmployee_salary(employeeRequest.getEmployee_salary());
+			employee.setEmployee_title(employeeRequest.getEmployee_title());
+			
+			LOGGER.info("Employee has been successfully created ::");
+			return employeeRepository.addEmployee(employee);
+		} else {
+			LOGGER.info("Validation failed while creating new employee ::");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Validation failed while creating new employee with the following reasons: "+validations.toString());
+		}
 	}
 
 	/**
@@ -260,14 +244,15 @@ public class EmployeeService {
 		if(data.contains("true")) {
 			try {
 				String successStatus = mapper.writeValueAsString(response.getBody().getStatus());
-				LOGGER.info("Employee with id # "+id+" has been successfully deleted");
+				LOGGER.info("Employee with id ("+id+") has been successfully deleted");
 				return successStatus.substring(1, successStatus.length() - 1)+" Employee with id "+id+" has been successfully deleted.";
 			} catch (JsonProcessingException e) {
 				LOGGER.error("Error processing JSON response:: ", e);
 			}
-		} if(employeeToBeDeleted.equals(null)) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to delete employee with id "+id+". Employee not found.");
-		}
+		} 
+//		if(employeeToBeDeleted == null) {
+//			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to delete employee with id "+id+". Employee not found.");
+//		}
 		
 		return status;
 	}

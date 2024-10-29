@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,6 +14,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,6 +37,7 @@ import com.reliaquest.api.repository.EmployeeRepository;
 import com.reliaquest.api.request.EmployeeRequest;
 import com.reliaquest.api.response.EmployeeResponse;
 import com.reliaquest.api.service.EmployeeService;
+import com.reliaquest.api.utility.EmployeeUtility;
 
 class EmployeeServiceTest {
 
@@ -156,18 +159,32 @@ class EmployeeServiceTest {
 
     @Test
     void testCreateEmployee() {
-    	UUID mockUUID1 = UUID.fromString("123e4567-e89b-12d3-a456-556642440000");
-        EmployeeRequest employeeRequest = new EmployeeRequest("1", "Oliver Vandervort", 50000, 30, "Developer", "ovandervort@example.com");
-        Employee mockEmployee = new Employee(mockUUID1, "Oliver Vandervort", 30, 50000, "Developer", "ovandervort@example.com");
-        EmployeeResponse mockResponse = new EmployeeResponse(mockEmployee, "HANDLED");
+        EmployeeRequest employeeRequest = new EmployeeRequest();
+        employeeRequest.setEmployee_name("John Doe");
+        employeeRequest.setEmployee_age(30);
+        employeeRequest.setEmployee_salary(50000);
+        employeeRequest.setEmployee_title("Engineer");
 
-        when(restTemplate.postForEntity(anyString(), eq(employeeRequest), eq(EmployeeResponse.class)))
-                .thenReturn(new ResponseEntity<>(mockResponse, HttpStatus.CREATED));
+        mockStatic(EmployeeUtility.class);
+        when(EmployeeUtility.validate(employeeRequest)).thenReturn(Collections.emptyList());
+
+        Employee expectedEmployee = new Employee();
+        expectedEmployee.setId(UUID.randomUUID());
+        expectedEmployee.setEmployee_name(employeeRequest.getEmployee_name());
+        expectedEmployee.setEmployee_age(employeeRequest.getEmployee_age());
+        expectedEmployee.setEmployee_salary(employeeRequest.getEmployee_salary());
+        expectedEmployee.setEmployee_title(employeeRequest.getEmployee_title());
+
+        when(employeeRepository.addEmployee(any(Employee.class))).thenReturn(expectedEmployee);
 
         Employee createdEmployee = employeeService.createEmployee(employeeRequest);
 
         assertNotNull(createdEmployee);
-        assertEquals("Oliver Vandervort", createdEmployee.getEmployee_name());
+        assertEquals(employeeRequest.getEmployee_name(), createdEmployee.getEmployee_name());
+        assertEquals(employeeRequest.getEmployee_age(), createdEmployee.getEmployee_age());
+        assertEquals(employeeRequest.getEmployee_salary(), createdEmployee.getEmployee_salary());
+        assertEquals(employeeRequest.getEmployee_title(), createdEmployee.getEmployee_title());
+        verify(employeeRepository, times(1)).addEmployee(any(Employee.class));
     }
 
     @Test
@@ -190,17 +207,14 @@ class EmployeeServiceTest {
 
     @Test
     void testGetHighestSalaryOfEmployees1() throws Exception {
-        // Setup mock response JSON
         String responseJson = "{ \"data\": [{ \"employee_name\": \"John Doe\", \"employee_salary\": 60000, \"employee_age\": 30, \"employee_title\": \"Developer\" }], \"status\": \"HANDLED\", \"error\": null }";
 
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServer.expect(requestTo("http://localhost:8112/api/v1/employee"))
                   .andRespond(withSuccess(responseJson, MediaType.APPLICATION_JSON));
 
-        // Perform the service method
         int highestSalary = employeeService.getHighestSalaryOfEmployees();
 
-        // Assertions
         assertEquals(60000, highestSalary);
         mockServer.verify();
     }
@@ -210,19 +224,15 @@ class EmployeeServiceTest {
         Employee mockEmployee = new Employee(UUID.randomUUID(), "John Doe", 70000, 30, "Developer", "john.doe@example.com");
         EmployeeResponse mockResponse = new EmployeeResponse(List.of(mockEmployee), "OK");
 
-        // Serialize to JSON
         String responseJson = objectMapper.writeValueAsString(mockResponse);
 
-        // Configure the mock server
         mockServer.expect(requestTo("http://localhost:8112/api/v1/employee"))
                   .andRespond(withStatus(HttpStatus.OK)
                   .contentType(MediaType.APPLICATION_JSON)
                   .body(responseJson));
 
-        // Call service
         int highestSalary = employeeService.getHighestSalaryOfEmployees();
 
-        // Verify
         assertEquals(70000, highestSalary);
         mockServer.verify();
     }    
