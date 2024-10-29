@@ -1,7 +1,6 @@
 package com.reliaquest.api.entity;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Optional;
 import java.util.UUID;
 
 public class Employee {

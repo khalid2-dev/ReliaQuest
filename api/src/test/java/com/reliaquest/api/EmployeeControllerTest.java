@@ -24,7 +24,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.reliaquest.api.controller.EmployeeController;
 import com.reliaquest.api.entity.Employee;
 import com.reliaquest.api.request.EmployeeRequest;
@@ -38,8 +37,8 @@ public class EmployeeControllerTest {
     @InjectMocks
     private EmployeeController employeeController;
     
-    @Autowired
-    private ObjectMapper objectMapper;    
+//    @Autowired
+//    private ObjectMapper objectMapper;    
 
     @Autowired
     private MockMvc mockMvc;

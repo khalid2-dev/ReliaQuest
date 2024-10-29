@@ -23,11 +23,6 @@ public class EmployeeException {
 		return ResponseEntity.status(ex.getStatusCode()).body(response);
 	}
 	
-//	@ExceptionHandler(EmployeeNotFoundException.class)
-//	public ResponseEntity<ErrorResponse> handleEmployeeNotFound(EmployeeNotFoundException ex) {
-//		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Employee not found. "+ex.getMessage());
-//	}
-	
 	@ExceptionHandler(GeneralException.class)
 	public ResponseEntity<ErrorResponse> generalException(GeneralException ex){
 		ErrorResponse response = new ErrorResponse("An unexpected error occured.", List.of(ex.getMessage()));

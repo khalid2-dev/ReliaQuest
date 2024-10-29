@@ -1,16 +1,11 @@
 package com.reliaquest.api.repository;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
 import org.springframework.stereotype.Repository;
 
 import com.reliaquest.api.entity.Employee;
-import com.reliaquest.api.request.EmployeeRequest;
 
 @Repository
 public class EmployeeRepository {

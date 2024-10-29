@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,10 +29,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.reliaquest.api.entity.Employee;
-import com.reliaquest.api.exception.EmployeeException;
-import com.reliaquest.api.exception.GeneralException;
 import com.reliaquest.api.repository.EmployeeRepository;
 import com.reliaquest.api.request.EmployeeRequest;
 import com.reliaquest.api.response.EmployeeResponse;
@@ -53,8 +49,8 @@ class EmployeeServiceTest {
     @Mock
     private MockRestServiceServer mockServer;
     
-    @Autowired
-    private ObjectMapper objectMapper;    
+//    @Autowired
+//    private ObjectMapper objectMapper;    
     
     private final String BASE_URL = "http://localhost:8112/api/v1/employee";
     
